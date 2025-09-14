@@ -91,10 +91,10 @@ const loginUser = async (req, res) => {
         const payload = { id: user._id, email: user.email };
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
         res.cookie('auth-token', token, {
-            httpOnly: true,                
-            secure: process.env.NODE_ENV === 'production',  
-            sameSite: 'strict',             
-            maxAge: 24 * 60 * 60 * 1000     
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'strict',
+            maxAge: 24 * 60 * 60 * 1000
         });
 
 
@@ -121,12 +121,86 @@ const loginUser = async (req, res) => {
 };
 
 const changePass = async (req, res) => {
+    try {
+        const useremail = req.user.email;
 
-}
+        const user = await User.findOne({ email: useremail });
+        if (!user) {
+            return res.status(404).send({
+                success: false,
+                message: 'Invalid user'
+            });
+        }
+
+        const { newpassword } = req.body;
+        if (!newpassword) {
+            return res.status(400).send({
+                success: false,
+                message: 'New password is required'
+            });
+        }
+
+        // Hash the new password
+        const hashedPassword = await bcrypt.hash(newpassword, 10);
+
+        // Update password
+        const updatedUser = await User.findOneAndUpdate(
+            { email: useremail },
+            { password: hashedPassword },
+            { new: true }
+        );
+
+        if (!updatedUser) {
+            return res.status(500).send({
+                success: false,
+                message: 'Failed to change password. Try again'
+            });
+        }
+
+        return res.status(200).send({
+            success: true,
+            message: 'Password changed successfully'
+        });
+
+    } catch (error) {
+        res.status(500).send({
+            success: false,
+            message: 'Failed to change password',
+            error: error.message
+        });
+    }
+};
+
+
+
+const logoutUser = async (req, res) => {
+    try {
+        // Clear the auth cookie
+        res.clearCookie('auth-token', {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict'
+        });
+
+        return res.status(200).send({
+            success: true,
+            message: 'User logged out successfully'
+        });
+
+    } catch (error) {
+        return res.status(500).send({
+            success: false,
+            message: 'Failed to logout',
+            error: error.message
+        });
+    }
+};
+
 
 module.exports = {
     getUser,
     registerUser,
     loginUser,
     changePass,
+    logoutUser,
 }
