@@ -140,10 +140,18 @@ const changePass = async (req, res) => {
             });
         }
 
-        // Hash the new password
+        // Check if new password is same as old
+        const isMatchPass = await bcrypt.compare(newpassword, user.password);
+        if (isMatchPass) {
+            return res.status(400).send({
+                success: false,
+                message: 'Please enter a different password'
+            });
+        }
+
+        // Hash and update password
         const hashedPassword = await bcrypt.hash(newpassword, 10);
 
-        // Update password
         const updatedUser = await User.findOneAndUpdate(
             { email: useremail },
             { password: hashedPassword },
@@ -163,7 +171,7 @@ const changePass = async (req, res) => {
         });
 
     } catch (error) {
-        res.status(500).send({
+        return res.status(500).send({
             success: false,
             message: 'Failed to change password',
             error: error.message
@@ -175,7 +183,7 @@ const changePass = async (req, res) => {
 
 const logoutUser = async (req, res) => {
     try {
-        // Clear the auth cookie
+
         res.clearCookie('auth-token', {
             httpOnly: true,
             secure: true,
