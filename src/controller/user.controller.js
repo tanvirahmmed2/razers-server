@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs')
+const jwt= require('jsonwebtoken')
 const User = require('../model/user.model')
 
 const getUser=async (req, res) => {
