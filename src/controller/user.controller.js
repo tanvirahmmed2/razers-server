@@ -1,8 +1,8 @@
 const bcrypt = require('bcryptjs')
-const jwt= require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
 const User = require('../model/user.model')
 
-const getUser=async (req, res) => {
+const getUser = async (req, res) => {
     try {
         const user = await User.find()
         res.send({
@@ -62,56 +62,71 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
     try {
-        const { email, password } = req.body
+        const { email, password } = req.body;
 
         if (!email || !password) {
             return res.status(400).send({
                 success: false,
                 message: 'Please fill all inputs'
-            })
+            });
         }
 
-        const user = await User.findOne({ email })
+        const user = await User.findOne({ email });
         if (!user) {
             return res.status(400).send({
                 success: false,
                 message: 'User not found, register before login'
-            })
+            });
         }
 
-        const isPasswordMatch = await bcrypt.compare(password, user.password)
+        const isPasswordMatch = await bcrypt.compare(password, user.password);
         if (!isPasswordMatch) {
             return res.status(400).send({
                 success: false,
                 message: 'Incorrect password'
-            })
+            });
         }
 
-        // Optional: generate JWT token here for authentication
+        // Only send safe data in the token
+        const payload = { id: user._id, email: user.email };
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '1d' });
+        res.cookie('auth-token', token, {
+            httpOnly: true,                
+            secure: process.env.NODE_ENV === 'production',  
+            sameSite: 'strict',             
+            maxAge: 24 * 60 * 60 * 1000     
+        });
+
 
         return res.status(200).send({
             success: true,
             message: 'User logged in successfully',
             payload: {
-                id: user._id,
-                name: user.name,
-                email: user.email
+                user: {
+                    id: user._id,
+                    name: user.name,
+                    email: user.email,
+                },
+                token
             }
-        })
+        });
 
     } catch (error) {
         return res.status(500).send({
             success: false,
             message: 'Login failed',
             error: error.message
-        })
+        });
     }
-}
+};
 
+const changePass = async (req, res) => {
+
+}
 
 module.exports = {
     getUser,
     registerUser,
-    loginUser
-
+    loginUser,
+    changePass,
 }
