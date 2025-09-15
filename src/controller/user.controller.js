@@ -4,7 +4,7 @@ const User = require('../model/user.model')
 
 const getUser = async (req, res) => {
     try {
-        const user = await User.find()
+        const user = await User.find().select('-password')
         res.send({
             success: true,
             message: `User Server is running`,

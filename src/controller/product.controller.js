@@ -1,5 +1,7 @@
 const Product = require("../model/product.model")
 
+const cloudinary = require('../config/cloudinary');
+
 const getProduct = async (req, res) => {
     try {
         const products = await Product.find()
@@ -18,13 +20,14 @@ const getProduct = async (req, res) => {
 
 
 
-const cloudinary = require('../config/cloudinary'); // your Cloudinary config
+
+
 
 const addProduct = async (req, res) => {
     try {
         const { name, old_price, new_price, quantity, description } = req.body;
 
-        // 1️⃣ Validate product fields
+
         if (!name || !old_price || !new_price || !quantity || !description) {
             return res.status(400).send({
                 success: false,
@@ -32,7 +35,6 @@ const addProduct = async (req, res) => {
             });
         }
 
-        // 2️⃣ Validate image file
         if (!req.file) {
             return res.status(400).send({
                 success: false,
@@ -40,22 +42,19 @@ const addProduct = async (req, res) => {
             });
         }
 
-        // 3️⃣ Convert buffer to base64 string for Cloudinary
         const fileStr = `data:${req.file.mimetype};base64,${req.file.buffer.toString('base64')}`;
 
-        // 4️⃣ Upload image to Cloudinary
         const uploadedImage = await cloudinary.uploader.upload(fileStr, {
-            folder: 'products', // optional: folder name in Cloudinary
+            folder: 'products',
         });
 
-        // 5️⃣ Create product object (replace with your Product model)
         const newProduct = new Product({
             name,
             old_price,
             new_price,
             quantity,
             description,
-            imageUrl: uploadedImage.secure_url, // store the Cloudinary URL
+            imageUrl: uploadedImage.secure_url,
             public_id: uploadedImage.public_id
         });
 
@@ -77,12 +76,50 @@ const addProduct = async (req, res) => {
 };
 
 
+const removeProduct = async (req, res) => {
+    try {
+        const { productId } = req.body;
 
+        if (!productId) {
+            return res.status(400).send({
+                success: false,
+                message: 'Product ID is required'
+            });
+        }
 
+        const product = await Product.findById(productId);
+        if (!product) {
+            return res.status(404).send({
+                success: false,
+                message: 'No product found with this ID'
+            });
+        }
+
+        // ✅ Correct field name
+        if (product.public_id) {
+            const result = await cloudinary.uploader.destroy(product.public_id);
+            console.log('Cloudinary delete result:', result);
+        }
+
+        await Product.findByIdAndDelete(productId);
+
+        res.status(200).send({
+            success: true,
+            message: 'Product and image removed successfully'
+        });
+
+    } catch (error) {
+        res.status(500).send({
+            success: false,
+            message: error.message
+        });
+    }
+};
 
 
 
 module.exports = {
     getProduct,
-    addProduct
+    addProduct,
+    removeProduct
 }
