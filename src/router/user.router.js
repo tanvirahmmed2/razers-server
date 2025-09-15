@@ -3,7 +3,7 @@ const { registerUser, loginUser, getUser, changePass, logoutUser } = require('..
 const { isLogin, isAdmin } = require('../middleware/user.middleware')
 const userRouter = express.Router()
 
-userRouter.get('/',isAdmin, getUser)
+userRouter.get('/', isAdmin, getUser)
 
 userRouter.post('/register', registerUser)
 userRouter.post('/login', loginUser)

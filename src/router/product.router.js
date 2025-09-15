@@ -8,7 +8,7 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
 
-productRouter.get('/', getProduct)
+productRouter.get('/',isAdmin, getProduct)
 productRouter.post('/addproduct', isAdmin, upload.single('image') ,addProduct)
 productRouter.delete('/removeproduct', isAdmin, removeProduct)
 
