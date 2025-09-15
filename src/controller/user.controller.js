@@ -101,14 +101,7 @@ const loginUser = async (req, res) => {
         return res.status(200).send({
             success: true,
             message: 'User logged in successfully',
-            payload: {
-                user: {
-                    id: user._id,
-                    name: user.name,
-                    email: user.email,
-                },
-                token
-            }
+            token
         });
 
     } catch (error) {
