@@ -20,9 +20,6 @@ const getProduct = async (req, res) => {
 
 
 
-
-
-
 const addProduct = async (req, res) => {
     try {
         const { name, old_price, new_price, quantity, description } = req.body;
